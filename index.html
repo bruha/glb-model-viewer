@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta charset="utf-8" />
+  <title>3DModel Animation</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js"></script>
+  <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+  <style>
+    body {
+      height: 2000px;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #EAE8E2;
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    .change {
+      position: absolute;
+      top: 0;
+      min-width: 40px;
+      min-height: 20px;
+      background-color: rgb(55, 178, 255);
+      border: none;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      margin: 2rem;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <model-viewer id="ring1" src="./B6070017.glb" camera-orbit="0deg -90deg auto"
+      camera-target="1m 0m 1m"></model-viewer>
+    <model-viewer id="ring2" class="hide" src="./B6070117.glb" camera-orbit="0deg -90deg auto"
+      camera-target="1m 0m 1m"></model-viewer>
+    <button class="change">Change ring</button>
+    <script>
+      let ring1;
+      let ring2;
+
+      setState()
+
+      function setState() {
+        ring1 = !document.getElementById('ring1').classList.length;
+        ring2 = !document.getElementById('ring2').classList.length
+      }
+
+      function toggleRing() {
+        if (ring1) {
+          document.getElementById('ring1').classList.toggle('hide');
+          document.getElementById('ring2').classList.toggle('hide');
+        } else {
+          document.getElementById('ring2').classList.toggle('hide');
+          document.getElementById('ring1').classList.toggle('hide');
+        }
+        window.scrollTo(0, 0);
+        setState();
+      }
+
+      const change = document.querySelector('.change');
+      change.addEventListener('click', toggleRing);
+
+      window.addEventListener('scroll', () => {
+        ring1 ? modelViewer = document.getElementById('ring1') : modelViewer = document.getElementById('ring2');
+        const scrollPosition = window.scrollY || window.pageYOffset;
+        const maxScrollPosition = document.body.offsetHeight - window.innerHeight;
+
+        // Normalize the scroll position between 0 and 1
+        const normalizedScrollPosition = scrollPosition / maxScrollPosition;
+
+        // Here we map the scroll position between 0 and 360 degrees for the azimuth
+        // and between -90 and 90 degrees for the inclination
+        const azimuth = normalizedScrollPosition * 360;
+        const inclination = (normalizedScrollPosition * 180) - 90;
+
+        // Map the scroll position between a min and max field of view
+        const minFieldOfView = 30; // Change to your preference
+        const maxFieldOfView = 90; // Change to your preference
+        const fieldOfView = (normalizedScrollPosition * (maxFieldOfView - minFieldOfView)) + minFieldOfView;
+
+        // Interpolate the camera target from (1, 0, 1) to (-1, 0, -1) based on the scroll position
+        const startTarget = {x: 1, y: 0, z: 1};
+        const endTarget = {x: -1, y: 0, z: -1};
+        const targetX = startTarget.x + normalizedScrollPosition * (endTarget.x - startTarget.x);
+        const targetY = startTarget.y + normalizedScrollPosition * (endTarget.y - startTarget.y);
+        const targetZ = startTarget.z + normalizedScrollPosition * (endTarget.z - startTarget.z);
+
+        modelViewer.cameraOrbit = `${azimuth}deg ${inclination}deg auto`;
+        modelViewer.fieldOfView = `${fieldOfView}deg`;
+        modelViewer.cameraTarget = `${targetX}m ${targetY}m ${targetZ}m`;
+
+        modelViewer.addEventListener('camera-change', () => {
+          console.log(modelViewer.cameraTarget);
+          console.log(modelViewer.cameraOrbit);
+          console.log(modelViewer.fieldOfView);
+        })
+      });
+    </script>
+  </div>
+</body>
+
+</html>
